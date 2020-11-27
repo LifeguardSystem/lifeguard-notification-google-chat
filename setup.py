@@ -1,0 +1,18 @@
+from setuptools import find_packages, setup
+
+from lifeguard_notification_google_chat import VERSION
+
+setup(
+    name="lifeguard-notification-google-chat",
+    version=VERSION,
+    url="https://github.com/LifeguardSystem/lifeguard-notification-google-chat",
+    author="Diego Rubin",
+    author_email="contact@diegorubin.dev",
+    license="GPL2",
+    scripts=[],
+    include_package_data=True,
+    description="Lifeguard integration with Google Chat",
+    install_requires=["lifeguard"],
+    classifiers=["Development Status :: 3 - Alpha"],
+    packages=find_packages(),
+)
