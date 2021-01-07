@@ -1,10 +1,8 @@
 from setuptools import find_packages, setup
 
-from lifeguard_notification_google_chat import VERSION
-
 setup(
     name="lifeguard-notification-google-chat",
-    version=VERSION,
+    version="0.0.2",
     url="https://github.com/LifeguardSystem/lifeguard-notification-google-chat",
     author="Diego Rubin",
     author_email="contact@diegorubin.dev",
