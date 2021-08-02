@@ -17,6 +17,10 @@ class GoogleNotificationBase(NotificationBase):
     Base of notification
     """
 
+    @property
+    def name(self):
+        return "google-chat"
+
     def send_single_message(self, content, _settings):
         logger.info("seding single message to google chat")
         data = {"text": content}
@@ -25,7 +29,9 @@ class GoogleNotificationBase(NotificationBase):
     def init_thread(self, content, _settings):
         logger.info("creating a new thread in google chat")
         data = {"text": content}
-        content = post(GOOGLE_DEFAULT_CHAT_ROOM, data=json.dumps(data), headers=HEADERS)
+        content = post(
+            GOOGLE_DEFAULT_CHAT_ROOM, data=json.dumps(data), headers=HEADERS
+        ).json()
         return content["thread"]
 
     def update_thread(self, thread_id, content, _settings):
