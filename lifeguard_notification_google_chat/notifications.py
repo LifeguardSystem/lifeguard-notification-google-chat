@@ -7,7 +7,10 @@ from lifeguard.http_client import post
 from lifeguard.logger import lifeguard_logger as logger
 from lifeguard.notifications import NotificationBase
 
-from lifeguard_notification_google_chat.settings import GOOGLE_DEFAULT_CHAT_ROOM
+from lifeguard_notification_google_chat.settings import (
+    GOOGLE_DEFAULT_CHAT_ROOM,
+    GOOGLE_LOG_RESPONSE,
+)
 
 HEADERS = {"Content-Type": "application/json; charset=UTF-8"}
 
@@ -24,7 +27,11 @@ class GoogleNotificationBase(NotificationBase):
     def send_single_message(self, content, _settings):
         logger.info("seding single message to google chat")
         data = {"text": content}
-        post(GOOGLE_DEFAULT_CHAT_ROOM, data=json.dumps(data), headers=HEADERS)
+        response = post(
+            GOOGLE_DEFAULT_CHAT_ROOM, data=json.dumps(data), headers=HEADERS
+        )
+        if GOOGLE_LOG_RESPONSE:
+            logger.info("google api response: %s", response.json())
 
     def init_thread(self, content, _settings):
         logger.info("creating a new thread in google chat")
@@ -32,6 +39,10 @@ class GoogleNotificationBase(NotificationBase):
         content = post(
             GOOGLE_DEFAULT_CHAT_ROOM, data=json.dumps(data), headers=HEADERS
         ).json()
+
+        if GOOGLE_LOG_RESPONSE:
+            logger.info("google api response: %s", content.json())
+
         return content["thread"]
 
     def update_thread(self, thread_id, content, _settings):
@@ -44,4 +55,8 @@ class GoogleNotificationBase(NotificationBase):
 
     def __send_to_thread(self, thread_id, content):
         data = {"text": content, "thread": thread_id}
-        post(GOOGLE_DEFAULT_CHAT_ROOM, data=json.dumps(data), headers=HEADERS)
+        response = post(
+            GOOGLE_DEFAULT_CHAT_ROOM, data=json.dumps(data), headers=HEADERS
+        )
+        if GOOGLE_LOG_RESPONSE:
+            logger.info("google api response: %s", response.json())
