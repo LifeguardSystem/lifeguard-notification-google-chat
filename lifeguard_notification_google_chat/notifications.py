@@ -41,7 +41,7 @@ class GoogleNotificationBase(NotificationBase):
         ).json()
 
         if GOOGLE_LOG_RESPONSE:
-            logger.info("google api response: %s", content.json())
+            logger.info("google api response: %s", content)
 
         return content["thread"]
 
