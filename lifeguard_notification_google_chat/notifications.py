@@ -24,26 +24,47 @@ class GoogleNotificationBase(NotificationBase):
     def name(self):
         return "google-chat"
 
+    @staticmethod
+    def __normalize_content(content):
+        if not isinstance(content, list):
+            content = [content]
+        return content
+
+    @staticmethod
+    def __log_response(response):
+        if GOOGLE_LOG_RESPONSE:
+            logger.info("google api response: %s", response)
+
     def send_single_message(self, content, _settings):
         logger.info("seding single message to google chat")
-        data = {"text": content}
+        content = self.__normalize_content(content)
+
+        first_message = content.pop(0)
+        data = {"text": first_message}
+
         response = post(
             GOOGLE_DEFAULT_CHAT_ROOM, data=json.dumps(data), headers=HEADERS
-        )
-        if GOOGLE_LOG_RESPONSE:
-            logger.info("google api response: %s", response.json())
+        ).json()
+        self.__log_response(response)
+
+        self.__send_to_thread(response["thread"], content)
 
     def init_thread(self, content, _settings):
         logger.info("creating a new thread in google chat")
-        data = {"text": content}
-        content = post(
+        content = self.__normalize_content(content)
+
+        first_message = content.pop(0)
+        data = {"text": first_message}
+
+        response = post(
             GOOGLE_DEFAULT_CHAT_ROOM, data=json.dumps(data), headers=HEADERS
         ).json()
+        self.__log_response(response)
 
-        if GOOGLE_LOG_RESPONSE:
-            logger.info("google api response: %s", content)
+        thread_id = response["thread"]
+        self.__send_to_thread(thread_id, content)
 
-        return content["thread"]
+        return thread_id
 
     def update_thread(self, thread_id, content, _settings):
         logger.info("updating thread %s in google chat", thread_id)
@@ -54,9 +75,12 @@ class GoogleNotificationBase(NotificationBase):
         self.__send_to_thread(thread_id, content)
 
     def __send_to_thread(self, thread_id, content):
-        data = {"text": content, "thread": thread_id}
-        response = post(
-            GOOGLE_DEFAULT_CHAT_ROOM, data=json.dumps(data), headers=HEADERS
-        )
-        if GOOGLE_LOG_RESPONSE:
-            logger.info("google api response: %s", response.json())
+        if not isinstance(content, list):
+            content = [content]
+
+        for entry in content:
+            data = {"text": entry, "thread": thread_id}
+            response = post(
+                GOOGLE_DEFAULT_CHAT_ROOM, data=json.dumps(data), headers=HEADERS
+            ).json()
+            self.__log_response(response)
