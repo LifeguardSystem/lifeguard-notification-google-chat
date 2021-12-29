@@ -61,7 +61,7 @@ class GoogleNotificationBaseTest(unittest.TestCase):
         json_response.json.return_value = {"thread": "thread"}
         mock_post.return_value = json_response
 
-        self.notification.init_thread(["line1", "line2"], {})
+        threads = self.notification.init_thread(["line1", "line2"], {})
 
         mock_post.assert_has_calls(
             [
@@ -77,23 +77,61 @@ class GoogleNotificationBaseTest(unittest.TestCase):
                 ),
             ]
         )
+        self.assertEqual(threads, ["thread"])
 
     @patch("lifeguard_notification_google_chat.notifications.post")
     @patch("lifeguard_notification_google_chat.notifications.logger", MOCK_LOGGER)
     def test_update_thread(self, mock_post):
-        self.notification.update_thread("content", "thread", {})
+        self.notification.update_thread(["thread"], "content", {})
         mock_post.assert_called_with(
             "",
-            data='{"text": "thread", "thread": "content"}',
+            data='{"text": "content", "thread": "thread"}',
             headers={"Content-Type": "application/json; charset=UTF-8"},
         )
 
     @patch("lifeguard_notification_google_chat.notifications.post")
     @patch("lifeguard_notification_google_chat.notifications.logger", MOCK_LOGGER)
     def test_close_thread(self, mock_post):
-        self.notification.close_thread("content", "thread", {})
+        self.notification.close_thread(["thread"], "content", {})
         mock_post.assert_called_with(
             "",
-            data='{"text": "thread", "thread": "content"}',
+            data='{"text": "content", "thread": "thread"}',
             headers={"Content-Type": "application/json; charset=UTF-8"},
         )
+
+    @patch("lifeguard_notification_google_chat.notifications.post")
+    @patch("lifeguard_notification_google_chat.notifications.logger", MOCK_LOGGER)
+    def test_init_multiple_threads_with_multiples_messages(self, mock_post):
+        json_response = MagicMock(name="json")
+        json_response.json.return_value = {"thread": "thread"}
+        mock_post.return_value = json_response
+
+        threads = self.notification.init_thread(
+            ["line1", "line2"], {"notification": {"google": {"rooms": ["r1", "r2"]}}}
+        )
+
+        mock_post.assert_has_calls(
+            [
+                call(
+                    "r1",
+                    data='{"text": "line1"}',
+                    headers={"Content-Type": "application/json; charset=UTF-8"},
+                ),
+                call(
+                    "r2",
+                    data='{"text": "line1"}',
+                    headers={"Content-Type": "application/json; charset=UTF-8"},
+                ),
+                call(
+                    "r1",
+                    data='{"text": "line2", "thread": "thread"}',
+                    headers={"Content-Type": "application/json; charset=UTF-8"},
+                ),
+                call(
+                    "r2",
+                    data='{"text": "line2", "thread": "thread"}',
+                    headers={"Content-Type": "application/json; charset=UTF-8"},
+                ),
+            ]
+        )
+        self.assertEqual(threads, ["thread", "thread"])
