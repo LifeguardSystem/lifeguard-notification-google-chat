@@ -35,52 +35,68 @@ class GoogleNotificationBase(NotificationBase):
         if GOOGLE_LOG_RESPONSE:
             logger.info("google api response: %s", response)
 
-    def send_single_message(self, content, _settings):
+    def send_single_message(self, content, settings):
         logger.info("seding single message to google chat")
         content = self.__normalize_content(content)
 
         first_message = content.pop(0)
-        data = {"text": first_message}
 
-        response = post(
-            GOOGLE_DEFAULT_CHAT_ROOM, data=json.dumps(data), headers=HEADERS
-        ).json()
-        self.__log_response(response)
+        threads = self.__post_message(first_message, [], settings)
 
-        self.__send_to_thread(response["thread"], content)
+        self.__send_to_thread(threads, content, settings)
 
-    def init_thread(self, content, _settings):
+    def init_thread(self, content, settings):
         logger.info("creating a new thread in google chat")
         content = self.__normalize_content(content)
 
         first_message = content.pop(0)
-        data = {"text": first_message}
 
-        response = post(
-            GOOGLE_DEFAULT_CHAT_ROOM, data=json.dumps(data), headers=HEADERS
-        ).json()
-        self.__log_response(response)
+        threads = self.__post_message(first_message, [], settings)
+        self.__send_to_thread(threads, content, settings)
 
-        thread_id = response["thread"]
-        self.__send_to_thread(thread_id, content)
+        return threads
 
-        return thread_id
+    def update_thread(self, threads, content, settings):
+        logger.info("updating thread %s in google chat", threads)
+        self.__send_to_thread(threads, content, settings)
 
-    def update_thread(self, thread_id, content, _settings):
-        logger.info("updating thread %s in google chat", thread_id)
-        self.__send_to_thread(thread_id, content)
+    def close_thread(self, threads, content, settings):
+        logger.info("closing thread %s in google chat", threads)
+        self.__send_to_thread(threads, content, settings)
 
-    def close_thread(self, thread_id, content, _settings):
-        logger.info("closing thread %s in google chat", thread_id)
-        self.__send_to_thread(thread_id, content)
+    def __get_thread(self, threads, index):
+        try:
+            return threads[index]
+        except IndexError:
+            return None
 
-    def __send_to_thread(self, thread_id, content):
+    def __post_message(self, text, threads, settings):
+        new_threads = []
+        rooms = (
+            settings.get("notification", {})
+            .get("google", {})
+            .get("rooms", [GOOGLE_DEFAULT_CHAT_ROOM])
+        )
+
+        for index, room in enumerate(rooms):
+            try:
+                thread = self.__get_thread(threads, index)
+                data = {"text": text}
+
+                if thread:
+                    data["thread"] = thread
+
+                response = post(room, data=json.dumps(data), headers=HEADERS).json()
+                self.__log_response(response)
+                new_threads.append(response["thread"])
+            except:
+                new_threads.append(None)
+
+        return new_threads
+
+    def __send_to_thread(self, threads, content, settings):
         if not isinstance(content, list):
             content = [content]
 
         for entry in content:
-            data = {"text": entry, "thread": thread_id}
-            response = post(
-                GOOGLE_DEFAULT_CHAT_ROOM, data=json.dumps(data), headers=HEADERS
-            ).json()
-            self.__log_response(response)
+            self.__post_message(entry, threads, settings)
