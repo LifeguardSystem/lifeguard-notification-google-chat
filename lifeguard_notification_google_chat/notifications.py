@@ -79,15 +79,18 @@ class GoogleNotificationBase(NotificationBase):
         )
 
         for index, room in enumerate(rooms):
-            thread = self.__get_thread(threads, index)
-            data = {"text": text}
+            try:
+                thread = self.__get_thread(threads, index)
+                data = {"text": text}
 
-            if thread:
-                data["thread"] = thread
+                if thread:
+                    data["thread"] = thread
 
-            response = post(room, data=json.dumps(data), headers=HEADERS).json()
-            self.__log_response(response)
-            new_threads.append(response["thread"])
+                response = post(room, data=json.dumps(data), headers=HEADERS).json()
+                self.__log_response(response)
+                new_threads.append(response["thread"])
+            except:
+                new_threads.append(None)
 
         return new_threads
 

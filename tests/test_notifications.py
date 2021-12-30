@@ -135,3 +135,21 @@ class GoogleNotificationBaseTest(unittest.TestCase):
             ]
         )
         self.assertEqual(threads, ["thread", "thread"])
+
+    @patch("lifeguard_notification_google_chat.notifications.post")
+    @patch("lifeguard_notification_google_chat.notifications.logger", MOCK_LOGGER)
+    def test_error_on_init_a_thread(self, mock_post):
+        json_response = MagicMock(name="json")
+        json_response.json.side_effect = [
+            {"thread": "t1"},
+            RuntimeError("invalid json"),
+            {"thread": "t2"},
+        ]
+        mock_post.return_value = json_response
+
+        threads = self.notification.init_thread(
+            ["line1", "line2"],
+            {"notification": {"google": {"rooms": ["r1", "r2", "r3"]}}},
+        )
+
+        self.assertEqual(threads, ["t1", None, "t2"])
