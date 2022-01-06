@@ -1,7 +1,9 @@
 """
 Base of notification system
 """
+from copy import deepcopy
 import json
+import traceback
 
 from lifeguard.http_client import post
 from lifeguard.logger import lifeguard_logger as logger
@@ -43,7 +45,7 @@ class GoogleNotificationBase(NotificationBase):
 
         threads = self.__post_message(first_message, [], settings)
 
-        self.__send_to_thread(threads, content, settings)
+        self.__send_to_thread(deepcopy(threads), content, settings)
 
     def init_thread(self, content, settings):
         logger.info("creating a new thread in google chat")
@@ -89,7 +91,12 @@ class GoogleNotificationBase(NotificationBase):
                 response = post(room, data=json.dumps(data), headers=HEADERS).json()
                 self.__log_response(response)
                 new_threads.append(response["thread"])
-            except:
+            except Exception as error:
+                logger.error(
+                    "error on post message: %s",
+                    str(error),
+                    extra={"traceback": traceback.format_exc()},
+                )
                 new_threads.append(None)
 
         return new_threads
