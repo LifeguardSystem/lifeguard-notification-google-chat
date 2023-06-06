@@ -20,3 +20,8 @@ Google Chat Notifications
 def a_validation():
     return ValidationResponse("a_validation", NORMAL, {}, {"notification": {"notify": True}})
 ```
+
+Screenshot with output of the example found in [https://github.com/LifeguardSystem/lifeguard-example/blob/main/validations/on_error_validation.py](https://github.com/LifeguardSystem/lifeguard-example/blob/main/validations/on_error_validation.py):
+
+![screenshot example](./docs/example-error-openai.png)
+
