@@ -90,7 +90,8 @@ class GoogleNotificationBase(NotificationBase):
 
                 response = post(room, data=json.dumps(data), headers=HEADERS).json()
                 self.__log_response(response)
-                new_threads.append(response["thread"])
+                if "thread" in response:
+                    new_threads.append(response["thread"])
             except Exception as error:
                 logger.error(
                     "error on post message: %s",
